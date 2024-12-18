@@ -14,77 +14,77 @@
 ------------------------------------------------------------------------------------
 'Identify country and all associated cities in data set'
 
-SELECT country, city
-FROM all_sessions
-WHERE country != '(not set)'
-	AND city != 'not available in demo dataset'
-	AND city != '(not set)'
-ORDER BY country
+	SELECT country, city
+	FROM all_sessions
+	WHERE country != '(not set)'
+		AND city != 'not available in demo dataset'
+		AND city != '(not set)'
+	ORDER BY country
 
 'Identify geographically incorrect data (example)'
 
-SELECT DISTINCT country, city
-FROM all_sessions
-WHERE country != '(not set)'
-	AND country = 'Canada'
-	AND city != 'not available in demo dataset'
-	AND city != '(not set)'
-ORDER BY city
+	SELECT DISTINCT country, city
+	FROM all_sessions
+	WHERE country != '(not set)'
+		AND country = 'Canada'
+		AND city != 'not available in demo dataset'
+		AND city != '(not set)'
+	ORDER BY city
 
 'The above query returns "New York" as city in Canada. To correct this:'
 
-SELECT DISTINCT
-    CASE
-        WHEN city = 'New York' THEN 'United States'
-        ELSE country
-    END AS country,
+	SELECT DISTINCT
+    		CASE
+        		WHEN city = 'New York' THEN 'United States'
+        		ELSE country
+    		END AS country,
 	city
-FROM all_sessions
+	FROM all_sessions
 
-WHERE country != '(not set)'
-	AND city != 'not available in demo dataset'
-	AND city != '(not set)'
-ORDER BY country
+	WHERE country != '(not set)'
+		AND city != 'not available in demo dataset'
+		AND city != '(not set)'
+	ORDER BY country
 
 2 - Confirm there are no negative or non-NUMERIC values in the totaltransactionrevenue column
 ------------------------------------------------------------------------------------
-SELECT totaltransactionrevenue
-FROM all_sessions
-WHERE totaltransactionrevenue IS NULL
-    OR totaltransactionrevenue <= 0
-    OR totaltransactionrevenue != totaltransactionrevenue::numeric
+	SELECT totaltransactionrevenue
+	FROM all_sessions
+	WHERE totaltransactionrevenue IS NULL
+    		OR totaltransactionrevenue <= 0
+    		OR totaltransactionrevenue != totaltransactionrevenue::numeric
 
 'The above query returns no negative results and no non-numeric results. However, an added WHERE clause to check for NULL values (which are non-numeric) results in very many NULLs. As such any query working with the totaltransactionrevenue column will need to include the WHERE clause below (as a data cleaning step):'
 
-WHERE totaltransactionrevenue IS NOT NULL
+	WHERE totaltransactionrevenue IS NOT NULL
 
 3 - Ensure that the order counts correspond by productsku between the 2 tables (sales_by_sku.total_ordered and products.orderedquantity) and that the sum totals are the same.
 ------------------------------------------------------------------------------------
 
 '1st checking that the sum totals are the same'
 
-SELECT SUM(total_ordered) AS sbs_sum
-FROM sales_by_sku
+	SELECT SUM(total_ordered) AS sbs_sum
+	FROM sales_by_sku
 
 'The above query returns "5524" '
 
-SELECT SUM(orderedquantity) AS prod_sum
-FROM products
+	SELECT SUM(orderedquantity) AS prod_sum
+	FROM products
 
 'The above query returns "156733" '
 
 "Since the sum totals are NOT the same, the differences by productsku needs to be checked.'
 
-SELECT sbs.productsku, sbs.total_ordered, p.sku, p.orderedquantity,
-	CASE
-		WHEN sbs.total_ordered = p.orderedquantity
-			THEN 'Match'
-		ELSE 'Does not match'
-	END AS "QTY Match Status"
-FROM sales_by_sku AS sbs
+	SELECT sbs.productsku, sbs.total_ordered, p.sku, p.orderedquantity,
+		CASE
+			WHEN sbs.total_ordered = p.orderedquantity
+				THEN 'Match'
+			ELSE 'Does not match'
+		END AS "QTY Match Status"
+	FROM sales_by_sku AS sbs
 
-JOIN products AS p
-	ON sbs.productsku = p.sku
+	JOIN products AS p
+		ON sbs.productsku = p.sku
 
 'The above query returns an informative comparison. While all the sbs.productsku can be found and are JOINed ON p.sku, the sbs.total_ordered and p.orderedquantity do not match whatsoever. The only QTY Match Status with the "Match" output are when both tables return "0" for that productsku. Interestingly, it also looks like the quantities of p.orderedquantity > sbs.total_ordered.
 
