@@ -138,11 +138,12 @@ SQL Queries:
         GROUP BY country, productsku, v2productname
 	    )
 
-SELECT country, productsku, v2productname, no_times_ordered
-FROM ranked_orders
+	SELECT country, productsku, v2productname, no_times_ordered
+	FROM ranked_orders
 
-WHERE rank = 1
-ORDER BY country
+	WHERE rank = 1
+	ORDER BY country
+
 Answer:
 
     The top selling product from each city/country is shown in the output from the query above. While there are over a hundred entries listed due to the number of countries, some notable examples are:
